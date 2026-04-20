@@ -1,0 +1,30 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: temporal
+  namespace: argocd
+spec:
+  project: default
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: temporal
+
+  sources:
+    - repoURL: https://charts.temporal.io
+      chart: temporal
+      targetRevision: 0.48.0
+      helm:
+        valueFiles:
+          - $values/temporal/values.yaml
+
+    - repoURL: https://github.com/Pazeezz/gitops.git
+      targetRevision: main
+      ref: values
+
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

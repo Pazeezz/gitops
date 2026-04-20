@@ -1,0 +1,11 @@
+server:
+  replicaCount: 1
+
+cassandra:
+  enabled: true
+
+prometheus:
+  enabled: false
+
+grafana:
+  enabled: false

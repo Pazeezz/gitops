@@ -5,9 +5,35 @@ cassandra:
   enabled: true
   config:
     cluster_size: 1
+  resources:
+    requests:
+      memory: "512Mi"
+      cpu: "100m"
+    limits:
+      memory: "1Gi"
+      cpu: "500m"
+  # Reduce JVM heap for local cluster
+  env:
+    - name: MAX_HEAP_SIZE
+      value: "512M"
+    - name: HEAP_NEWSIZE
+      value: "128M"
+  persistence:
+    enabled: true
+    size: 2Gi  # reduce from default 8Gi if storage is limited
 
 prometheus:
   enabled: false
 
 grafana:
   enabled: false
+
+# Schema job needs longer timeout since cassandra may be slow to start
+schema:
+  setup:
+    enabled: true
+  update:
+    enabled: true
+
+elasticsearch:
+  enabled: false  # disable if you don't need search (reduces resource usage)

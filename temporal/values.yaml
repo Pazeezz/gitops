@@ -3,6 +3,8 @@ server:
 
 cassandra:
   enabled: true
+  config:
+    cluster_size: 1
 
 prometheus:
   enabled: false

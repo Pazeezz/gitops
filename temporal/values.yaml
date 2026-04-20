@@ -5,27 +5,26 @@ cassandra:
   enabled: true
   config:
     cluster_size: 1
-  ## Use extraEnv, not env - this is what the bitnami cassandra chart reads
   extraEnv:
     - name: MAX_HEAP_SIZE
-      value: "512M"
+      value: "256M"      # Reduced - enough for dev/local
     - name: HEAP_NEWSIZE
-      value: "128M"
+      value: "64M"
+    - name: JVM_OPTS
+      value: "-Xms256M -Xmx256M"
   resources:
     requests:
-      memory: "1Gi"
-      cpu: "200m"
+      memory: "512Mi"
+      cpu: "100m"
     limits:
-      memory: "2Gi"   # Must be > MAX_HEAP_SIZE + JVM overhead (~600MB extra)
-      cpu: "1000m"
+      memory: "1Gi"      # 256M heap + ~700MB JVM overhead fits in 1Gi
+      cpu: "500m"
   persistence:
-    enabled: false    # Keep false to avoid StatefulSet immutable field issues
+    enabled: false
 
 prometheus:
   enabled: false
-
 grafana:
   enabled: false
-
 elasticsearch:
   enabled: false

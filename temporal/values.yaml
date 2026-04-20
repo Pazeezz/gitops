@@ -5,19 +5,14 @@ cassandra:
   enabled: true
   config:
     cluster_size: 1
-  extraEnv:
-    - name: MAX_HEAP_SIZE
-      value: "256M"      # Reduced - enough for dev/local
-    - name: HEAP_NEWSIZE
-      value: "64M"
-    - name: JVM_OPTS
-      value: "-Xms256M -Xmx256M"
+    max_heap_size: 256M      # This overrides the hardcoded 512M
+    heap_new_size: 64M
   resources:
     requests:
       memory: "512Mi"
       cpu: "100m"
     limits:
-      memory: "1Gi"      # 256M heap + ~700MB JVM overhead fits in 1Gi
+      memory: "1Gi"
       cpu: "500m"
   persistence:
     enabled: false

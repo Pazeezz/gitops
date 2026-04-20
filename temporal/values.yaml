@@ -5,22 +5,21 @@ cassandra:
   enabled: true
   config:
     cluster_size: 1
-  resources:
-    requests:
-      memory: "512Mi"
-      cpu: "100m"
-    limits:
-      memory: "1Gi"
-      cpu: "500m"
-  # Reduce JVM heap for local cluster
-  env:
+  ## Use extraEnv, not env - this is what the bitnami cassandra chart reads
+  extraEnv:
     - name: MAX_HEAP_SIZE
       value: "512M"
     - name: HEAP_NEWSIZE
       value: "128M"
+  resources:
+    requests:
+      memory: "1Gi"
+      cpu: "200m"
+    limits:
+      memory: "2Gi"   # Must be > MAX_HEAP_SIZE + JVM overhead (~600MB extra)
+      cpu: "1000m"
   persistence:
-    enabled: true
-    size: 2Gi  # reduce from default 8Gi if storage is limited
+    enabled: false    # Keep false to avoid StatefulSet immutable field issues
 
 prometheus:
   enabled: false
@@ -28,12 +27,5 @@ prometheus:
 grafana:
   enabled: false
 
-# Schema job needs longer timeout since cassandra may be slow to start
-schema:
-  setup:
-    enabled: true
-  update:
-    enabled: true
-
 elasticsearch:
-  enabled: false  # disable if you don't need search (reduces resource usage)
+  enabled: false

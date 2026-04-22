@@ -35,6 +35,14 @@ extraEnvs:
     value: single-node
   - name: ELASTIC_PASSWORD
     value: "changeme"
+  # These override the chart's hardcoded xpack.security env vars (set when
+  # createCert: true). Env vars listed last win in Kubernetes pod spec.
+  - name: xpack.security.enabled
+    value: "false"
+  - name: xpack.security.transport.ssl.enabled
+    value: "false"
+  - name: xpack.security.http.ssl.enabled
+    value: "false"
 
 # ── JVM heap: keep low for local cluster ─────────────────────────────────────
 # Xms == Xmx to avoid heap resizing pauses. Must be < 50% of pod memory limit.

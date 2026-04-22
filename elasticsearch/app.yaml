@@ -22,14 +22,8 @@ spec:
       targetRevision: main
       ref: values
 
-  # Ignore secret data fields — Helm regenerates random certs/passwords on every
-  # render, causing perpetual OutOfSync even when nothing actually changed.
+  # credentials secret data drifts on every render — ignore it
   ignoreDifferences:
-    - group: ""
-      kind: Secret
-      name: elasticsearch-master-certs
-      jsonPointers:
-        - /data
     - group: ""
       kind: Secret
       name: elasticsearch-master-credentials

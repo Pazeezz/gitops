@@ -2,53 +2,50 @@
 clusterName: "elasticsearch"
 nodeGroup: "master"
 
-# ── Image: pin to exact version ───────────────────────────────────────────────
+# ── Image ─────────────────────────────────────────────────────────────────────
 image: "docker.elastic.co/elasticsearch/elasticsearch"
 imageTag: "8.11.4"
 imagePullPolicy: "IfNotPresent"
 
-# ── Topology: single-node for local dev ──────────────────────────────────────
-# 1 replica + single-node discovery avoids master-election bootstrap issues.
-# Bump replicas to 3 and remove the discovery.type extraEnv for a real cluster.
+# ── Topology ──────────────────────────────────────────────────────────────────
+# roles: [] prevents the chart from injecting cluster.initial_master_nodes.
+# The chart's elasticsearch.endpoints helper always appends a trailing comma
+# (e.g. "elasticsearch-master-0,") which ES 8.x rejects as a null-valued list
+# entry. With an empty roles list the node.roles env var is also suppressed,
+# so ES uses its default all-roles behaviour (master + data + ingest + ...).
+# discovery.type=single-node (in extraEnvs) handles self-election without
+# needing cluster.initial_master_nodes at all.
 replicas: 1
 minimumMasterNodes: 1
 
-roles:
-  - master
-  - data
-  - ingest
+roles: []
 
-# ── Elasticsearch config ──────────────────────────────────────────────────────
-# Disables all security/TLS for local development. Re-enable for production.
+# ── Protocol: http ────────────────────────────────────────────────────────────
+# Setting protocol=http prevents the chart from injecting xpack.security.*
+# env vars into the StatefulSet. Those env vars override esConfig and cannot
+# be safely overridden via extraEnvs (causes duplicate-name patch conflict).
+protocol: http
+httpPort: 9200
+transportPort: 9300
+
+# ── Elasticsearch config file ─────────────────────────────────────────────────
 esConfig:
   elasticsearch.yml: |
     xpack.security.enabled: false
     xpack.security.enrollment.enabled: false
-    xpack.security.http.ssl.enabled: false
-    xpack.security.transport.ssl.enabled: false
     network.host: 0.0.0.0
 
-# single-node discovery type — required when replicas: 1
-# Removes the need for a quorum and skips bootstrap checks.
+# ── Environment variables ──────────────────────────────────────────────────────
+# discovery.type=single-node: node self-elects without cluster.initial_master_nodes.
+# ELASTIC_PASSWORD: required by the chart's readiness probe script.
+# No duplicates of any chart-injected env var names here.
 extraEnvs:
   - name: discovery.type
-    value: single-node
-  # cluster.initial_master_nodes is incompatible with discovery.type=single-node
-  # in ES 8.x. Override to empty to clear the value the chart injects.
-  - name: cluster.initial_master_nodes
-    value: ""
+    value: "single-node"
   - name: ELASTIC_PASSWORD
     value: "changeme"
-  # Override chart's hardcoded xpack.security env vars (injected when createCert: true).
-  - name: xpack.security.enabled
-    value: "false"
-  - name: xpack.security.transport.ssl.enabled
-    value: "false"
-  - name: xpack.security.http.ssl.enabled
-    value: "false"
 
-# ── JVM heap: keep low for local cluster ─────────────────────────────────────
-# Xms == Xmx to avoid heap resizing pauses. Must be < 50% of pod memory limit.
+# ── JVM heap ──────────────────────────────────────────────────────────────────
 esJavaOpts: "-Xmx512m -Xms512m"
 
 # ── Resources ─────────────────────────────────────────────────────────────────
@@ -60,25 +57,38 @@ resources:
     cpu: "1000m"
     memory: "2Gi"
 
-# ── Persistent storage ────────────────────────────────────────────────────────
+# ── Storage ───────────────────────────────────────────────────────────────────
 persistence:
   enabled: true
   labels:
     enabled: false
-  annotations: {}
 
 volumeClaimTemplate:
   accessModes: ["ReadWriteOnce"]
   resources:
     requests:
       storage: 5Gi
-  # storageClassName: ""   # uncomment to target a specific StorageClass
 
-# ── Network ───────────────────────────────────────────────────────────────────
-protocol: http
-httpPort: 9200
-transportPort: 9300
+# ── Certs: disabled ───────────────────────────────────────────────────────────
+# createCert: false removes the cert Secret, the cert volume, and the cert
+# volume mount from the StatefulSet — no FailedMount, no xpack SSL env vars.
+createCert: false
 
+# ── Credentials secret: disabled ──────────────────────────────────────────────
+secret:
+  enabled: false
+  password: ""
+
+# ── Scheduling ────────────────────────────────────────────────────────────────
+antiAffinity: "soft"
+antiAffinityTopologyKey: "kubernetes.io/hostname"
+podManagementPolicy: "Parallel"
+
+# ── Sysctls ───────────────────────────────────────────────────────────────────
+sysctlInitContainer:
+  enabled: true
+
+# ── Service ───────────────────────────────────────────────────────────────────
 service:
   enabled: true
   type: ClusterIP
@@ -90,46 +100,10 @@ service:
       port: 9300
       protocol: TCP
 
-# ── Anti-affinity: soft so single-node dev clusters don't get stuck ──────────
-antiAffinity: "soft"
-antiAffinityTopologyKey: "kubernetes.io/hostname"
-
-# ── Pod management ───────────────────────────────────────────────────────────
-podManagementPolicy: "Parallel"
-
-# ── Sysctls init container ────────────────────────────────────────────────────
-# ES requires vm.max_map_count >= 262144. The official chart handles this via
-# a privileged init container. Set to false only if your nodes already set it.
-sysctlInitContainer:
-  enabled: true
-
-# ── Readiness / health ────────────────────────────────────────────────────────
-readinessProbe:
-  failureThreshold: 3
-  initialDelaySeconds: 10
-  periodSeconds: 10
-  successThreshold: 3
-  timeoutSeconds: 5
-
-# ── Disabled features (not needed for local dev) ──────────────────────────────
+# ── Disabled ──────────────────────────────────────────────────────────────────
 rbac:
   create: false
-
 podSecurityPolicy:
   create: false
-
 ingress:
   enabled: false
-
-# Keep cert secret creation enabled — the StatefulSet always mounts it as a
-# volume so disabling it causes FailedMount. Argo CD ignoreDifferences +
-# RespectIgnoreDifferences prevents the data from being overwritten on each sync.
-createCert: true
-
-# Disable credentials secret — not needed since security is off.
-secret:
-  enabled: false
-  password: ""
-
-nameOverride: ""
-fullnameOverride: ""

@@ -1,0 +1,112 @@
+# ── Identity ──────────────────────────────────────────────────────────────────
+clusterName: "elasticsearch"
+nodeGroup: "master"
+
+# ── Image: pin to exact version ───────────────────────────────────────────────
+image: "docker.elastic.co/elasticsearch/elasticsearch"
+imageTag: "8.11.4"
+imagePullPolicy: "IfNotPresent"
+
+# ── Topology: single-node for local dev ──────────────────────────────────────
+# 1 replica + single-node discovery avoids master-election bootstrap issues.
+# Bump replicas to 3 and remove the discovery.type extraEnv for a real cluster.
+replicas: 1
+minimumMasterNodes: 1
+
+roles:
+  - master
+  - data
+  - ingest
+
+# ── Elasticsearch config ──────────────────────────────────────────────────────
+# Disables all security/TLS for local development. Re-enable for production.
+esConfig:
+  elasticsearch.yml: |
+    xpack.security.enabled: false
+    xpack.security.enrollment.enabled: false
+    xpack.security.http.ssl.enabled: false
+    xpack.security.transport.ssl.enabled: false
+    network.host: 0.0.0.0
+
+# single-node discovery type — required when replicas: 1
+# Removes the need for a quorum and skips bootstrap checks.
+extraEnvs:
+  - name: discovery.type
+    value: single-node
+
+# ── JVM heap: keep low for local cluster ─────────────────────────────────────
+# Xms == Xmx to avoid heap resizing pauses. Must be < 50% of pod memory limit.
+esJavaOpts: "-Xmx512m -Xms512m"
+
+# ── Resources ─────────────────────────────────────────────────────────────────
+resources:
+  requests:
+    cpu: "100m"
+    memory: "1Gi"
+  limits:
+    cpu: "1000m"
+    memory: "2Gi"
+
+# ── Persistent storage ────────────────────────────────────────────────────────
+persistence:
+  enabled: true
+  labels:
+    enabled: false
+  annotations: {}
+
+volumeClaimTemplate:
+  accessModes: ["ReadWriteOnce"]
+  resources:
+    requests:
+      storage: 5Gi
+  # storageClassName: ""   # uncomment to target a specific StorageClass
+
+# ── Network ───────────────────────────────────────────────────────────────────
+protocol: http
+httpPort: 9200
+transportPort: 9300
+
+service:
+  enabled: true
+  type: ClusterIP
+  ports:
+    - name: http
+      port: 9200
+      protocol: TCP
+    - name: transport
+      port: 9300
+      protocol: TCP
+
+# ── Anti-affinity: soft so single-node dev clusters don't get stuck ──────────
+antiAffinity: "soft"
+antiAffinityTopologyKey: "kubernetes.io/hostname"
+
+# ── Pod management ───────────────────────────────────────────────────────────
+podManagementPolicy: "Parallel"
+
+# ── Sysctls init container ────────────────────────────────────────────────────
+# ES requires vm.max_map_count >= 262144. The official chart handles this via
+# a privileged init container. Set to false only if your nodes already set it.
+sysctlInitContainer:
+  enabled: true
+
+# ── Readiness / health ────────────────────────────────────────────────────────
+readinessProbe:
+  failureThreshold: 3
+  initialDelaySeconds: 10
+  periodSeconds: 10
+  successThreshold: 3
+  timeoutSeconds: 5
+
+# ── Disabled features (not needed for local dev) ──────────────────────────────
+rbac:
+  create: false
+
+podSecurityPolicy:
+  create: false
+
+ingress:
+  enabled: false
+
+nameOverride: ""
+fullnameOverride: ""

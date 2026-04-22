@@ -33,6 +33,8 @@ esConfig:
 extraEnvs:
   - name: discovery.type
     value: single-node
+  - name: ELASTIC_PASSWORD
+    value: "changeme"
 
 # ── JVM heap: keep low for local cluster ─────────────────────────────────────
 # Xms == Xmx to avoid heap resizing pauses. Must be < 50% of pod memory limit.

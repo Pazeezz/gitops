@@ -33,10 +33,13 @@ esConfig:
 extraEnvs:
   - name: discovery.type
     value: single-node
+  # cluster.initial_master_nodes is incompatible with discovery.type=single-node
+  # in ES 8.x. Override to empty to clear the value the chart injects.
+  - name: cluster.initial_master_nodes
+    value: ""
   - name: ELASTIC_PASSWORD
     value: "changeme"
-  # These override the chart's hardcoded xpack.security env vars (set when
-  # createCert: true). Env vars listed last win in Kubernetes pod spec.
+  # Override chart's hardcoded xpack.security env vars (injected when createCert: true).
   - name: xpack.security.enabled
     value: "false"
   - name: xpack.security.transport.ssl.enabled

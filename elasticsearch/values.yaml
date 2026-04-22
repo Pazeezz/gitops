@@ -108,5 +108,15 @@ podSecurityPolicy:
 ingress:
   enabled: false
 
+# Disable TLS cert secret generation — security is off, certs are unused.
+# Without this the chart regenerates certs on every Helm render, causing
+# permanent OutOfSync in Argo CD.
+createCert: false
+
+# Disable credentials secret generation for the same reason.
+secret:
+  enabled: false
+  password: ""
+
 nameOverride: ""
 fullnameOverride: ""

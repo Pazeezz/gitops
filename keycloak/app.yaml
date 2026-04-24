@@ -1,0 +1,39 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: keycloak
+  namespace: argocd
+spec:
+  project: default
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: keycloak
+
+  sources:
+    - repoURL: https://charts.bitnami.com/bitnami
+      chart: keycloak
+      targetRevision: 25.2.0
+      helm:
+        valueFiles:
+          - $values/keycloak/values.yaml
+
+    - repoURL: https://github.com/Pazeezz/gitops.git
+      targetRevision: main
+      ref: values
+
+  # admin-secret password drifts on re-renders — ignore it
+  ignoreDifferences:
+    - group: ""
+      kind: Secret
+      name: keycloak
+      jsonPointers:
+        - /data/admin-password
+
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - RespectIgnoreDifferences=true

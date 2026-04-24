@@ -1,0 +1,52 @@
+# ── Replica ───────────────────────────────────────────────────────
+replicaCount: 1
+
+# ── Auth ──────────────────────────────────────────────────────────
+auth:
+  adminUser: admin
+  adminPassword: "admin"
+
+# ── Production mode off (dev-friendly single-node) ────────────────
+production: false
+proxyHeaders: ""
+
+# ── Resources ─────────────────────────────────────────────────────
+resources:
+  requests:
+    cpu: 200m
+    memory: 512Mi
+  limits:
+    cpu: 1000m
+    memory: 1Gi
+
+# ── Persistence ───────────────────────────────────────────────────
+persistence:
+  enabled: true
+  size: 2Gi
+  accessModes:
+    - ReadWriteOnce
+
+# ── PostgreSQL subchart ───────────────────────────────────────────
+postgresql:
+  enabled: true
+  auth:
+    username: keycloak
+    password: keycloak
+    database: keycloak
+  primary:
+    persistence:
+      enabled: true
+      size: 2Gi
+    resources:
+      requests:
+        cpu: 100m
+        memory: 256Mi
+      limits:
+        cpu: 500m
+        memory: 512Mi
+
+# ── Service ───────────────────────────────────────────────────────
+service:
+  type: ClusterIP
+  ports:
+    http: 80

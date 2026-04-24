@@ -3,6 +3,10 @@ replicaCount: 1
 
 # ── Image: quay.io/keycloak/keycloak (chart default, no override needed) ──
 
+# ── Use modern Keycloak URL structure (no /auth prefix) ───────────
+http:
+  relativePath: "/"
+
 # ── Admin credentials ─────────────────────────────────────────────
 args:
   - start-dev

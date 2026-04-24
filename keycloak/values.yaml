@@ -6,6 +6,7 @@ replicaCount: 1
 # ── Admin credentials ─────────────────────────────────────────────
 args:
   - start-dev
+  - --cache=local
 
 extraEnv: |
   - name: KEYCLOAK_ADMIN

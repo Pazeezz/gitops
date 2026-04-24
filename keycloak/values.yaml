@@ -20,15 +20,6 @@ extraEnv: |
   - name: KC_PROXY
     value: edge
 
-# ── External PostgreSQL ────────────────────────────────────────────
-database:
-  vendor: postgres
-  hostname: keycloak-postgres
-  port: 5432
-  database: keycloak
-  username: keycloak
-  password: keycloak
-
 # ── Resources ─────────────────────────────────────────────────────
 resources:
   requests:

@@ -1,20 +1,28 @@
-# ── Global image registry (Bitnami stopped pushing to Docker Hub) ──
-global:
-  imageRegistry: oci.bitnami.com
-  security:
-    allowInsecureImages: true
-
 # ── Replica ───────────────────────────────────────────────────────
 replicaCount: 1
 
-# ── Auth ──────────────────────────────────────────────────────────
-auth:
-  adminUser: admin
-  adminPassword: "admin"
+# ── Image: quay.io/keycloak/keycloak (chart default, no override needed) ──
 
-# ── Production mode off (dev-friendly single-node) ────────────────
-production: false
-proxyHeaders: ""
+# ── Admin credentials ─────────────────────────────────────────────
+command:
+  - start-dev
+
+extraEnv: |
+  - name: KEYCLOAK_ADMIN
+    value: admin
+  - name: KEYCLOAK_ADMIN_PASSWORD
+    value: admin
+  - name: KC_PROXY
+    value: edge
+
+# ── External PostgreSQL (deployed via keycloak-db app) ────────────
+database:
+  vendor: postgres
+  hostname: keycloak-postgres
+  port: 5432
+  database: keycloak
+  username: keycloak
+  password: keycloak
 
 # ── Resources ─────────────────────────────────────────────────────
 resources:
@@ -25,34 +33,6 @@ resources:
     cpu: 1000m
     memory: 1Gi
 
-# ── Persistence ───────────────────────────────────────────────────
-persistence:
-  enabled: true
-  size: 2Gi
-  accessModes:
-    - ReadWriteOnce
-
-# ── PostgreSQL subchart ───────────────────────────────────────────
-postgresql:
-  enabled: true
-  auth:
-    username: keycloak
-    password: keycloak
-    database: keycloak
-  primary:
-    persistence:
-      enabled: true
-      size: 2Gi
-    resources:
-      requests:
-        cpu: 100m
-        memory: 256Mi
-      limits:
-        cpu: 500m
-        memory: 512Mi
-
 # ── Service ───────────────────────────────────────────────────────
 service:
   type: ClusterIP
-  ports:
-    http: 80

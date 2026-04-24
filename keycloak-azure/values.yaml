@@ -1,0 +1,85 @@
+# ── Replica ───────────────────────────────────────────────────────
+replicaCount: 1
+
+# ── Modern URL structure (no /auth prefix) ────────────────────────
+http:
+  relativePath: "/"
+
+# ── Production mode ───────────────────────────────────────────────
+# 'start' requires --optimized or a full build; for Azure single-node
+# with TLS terminated at the load balancer use these args:
+args:
+  - start
+  - --cache=local
+  - --http-enabled=true
+
+# ── Environment variables ─────────────────────────────────────────
+extraEnv: |
+  - name: KC_BOOTSTRAP_ADMIN_USERNAME
+    value: admin
+  - name: KC_BOOTSTRAP_ADMIN_PASSWORD
+    valueFrom:
+      secretKeyRef:
+        name: keycloak-admin-secret
+        key: password
+  - name: KC_HOSTNAME
+    value: "https://keycloak.your-domain.com"
+  - name: KC_PROXY_HEADERS
+    value: xforwarded
+  - name: KC_HTTP_ENABLED
+    value: "true"
+
+# ── Admin secret (create manually before deploying) ───────────────
+# kubectl create secret generic keycloak-admin-secret \
+#   --from-literal=password=<your-secure-password> \
+#   -n keycloak
+
+# ── External PostgreSQL (Azure Database for PostgreSQL) ───────────
+database:
+  vendor: postgres
+  hostname: "<your-server>.postgres.database.azure.com"
+  port: 5432
+  database: keycloak
+  username: "keycloak@<your-server>"
+  password: "<your-db-password>"
+
+# ── Resources ─────────────────────────────────────────────────────
+resources:
+  requests:
+    cpu: 500m
+    memory: 1Gi
+  limits:
+    cpu: 2000m
+    memory: 2Gi
+
+# ── Startup probe ─────────────────────────────────────────────────
+startupProbe: |
+  httpGet:
+    path: /health
+    port: http-internal
+    scheme: HTTP
+  initialDelaySeconds: 60
+  timeoutSeconds: 5
+  failureThreshold: 30
+  periodSeconds: 5
+
+# ── Ingress (Azure NGINX ingress controller) ──────────────────────
+ingress:
+  enabled: true
+  ingressClassName: nginx
+  annotations:
+    nginx.ingress.kubernetes.io/proxy-buffer-size: "128k"
+    nginx.ingress.kubernetes.io/proxy-buffers-number: "4"
+  rules:
+    - host: keycloak.your-domain.com
+      paths:
+        - path: /
+          pathType: Prefix
+  tls:
+    - secretName: keycloak-tls-secret
+      hosts:
+        - keycloak.your-domain.com
+
+# ── Service ───────────────────────────────────────────────────────
+service:
+  type: ClusterIP

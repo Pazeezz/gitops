@@ -4,7 +4,7 @@ replicaCount: 1
 # ── Image: quay.io/keycloak/keycloak (chart default, no override needed) ──
 
 # ── Admin credentials ─────────────────────────────────────────────
-command:
+args:
   - start-dev
 
 extraEnv: |
@@ -14,6 +14,15 @@ extraEnv: |
     value: admin
   - name: KC_PROXY
     value: edge
+
+# ── External PostgreSQL ────────────────────────────────────────────
+database:
+  vendor: postgres
+  hostname: keycloak-postgres
+  port: 5432
+  database: keycloak
+  username: keycloak
+  password: keycloak
 
 # ── Resources ─────────────────────────────────────────────────────
 resources:

@@ -1,3 +1,7 @@
+# ── Global image registry (Bitnami stopped pushing to Docker Hub) ──
+global:
+  imageRegistry: oci.bitnami.com
+
 # ── Replica ───────────────────────────────────────────────────────
 replicaCount: 1
 

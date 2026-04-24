@@ -20,6 +20,17 @@ extraEnv: |
   - name: KC_PROXY
     value: edge
 
+# ── Startup probe: wait 40s before first check (augmentation takes ~23s) ──
+startupProbe: |
+  httpGet:
+    path: /health
+    port: http-internal
+    scheme: HTTP
+  initialDelaySeconds: 40
+  timeoutSeconds: 5
+  failureThreshold: 30
+  periodSeconds: 5
+
 # ── Resources ─────────────────────────────────────────────────────
 resources:
   requests:

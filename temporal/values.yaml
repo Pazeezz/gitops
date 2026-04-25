@@ -8,10 +8,14 @@ cassandra:
   selector:
     nodeSelector:
       kubernetes.io/hostname: redpanda-lab-worker
+  image:
+    tag: "4.0"
   config:
     cluster_size: 1
     max_heap_size: 512M
     heap_new_size: 128M
+  env:
+    MALLOC_CONF: "narenas:4,background_thread:false"
   livenessProbe:
     initialDelaySeconds: 120
     periodSeconds: 30

@@ -22,6 +22,12 @@ spec:
       targetRevision: main
       ref: values
 
+  ignoreDifferences:
+    - group: batch
+      kind: Job
+      jqPathExpressions:
+        - .spec.template
+
   syncPolicy:
     automated:
       prune: true

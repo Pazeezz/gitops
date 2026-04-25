@@ -3,6 +3,8 @@ server:
 
 cassandra:
   enabled: true
+  updateStrategy:
+    type: RollingUpdate
   config:
     cluster_size: 1
     max_heap_size: 512M

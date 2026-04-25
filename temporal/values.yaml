@@ -1,5 +1,18 @@
 server:
   replicaCount: 1
+  config:
+    persistence:
+      datastores:
+        default:
+          cassandra:
+            hosts: "temporal-cassandra"
+            keyspace: temporal
+            replicationFactor: 1
+        visibility:
+          cassandra:
+            hosts: "temporal-cassandra"
+            keyspace: temporal_visibility
+            replicationFactor: 1
 
 cassandra:
   enabled: true

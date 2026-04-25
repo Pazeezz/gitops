@@ -5,14 +5,26 @@ cassandra:
   enabled: true
   config:
     cluster_size: 1
-    max_heap_size: 256M      # This overrides the hardcoded 512M
-    heap_new_size: 64M
+    max_heap_size: 512M
+    heap_new_size: 128M
+  livenessProbe:
+    initialDelaySeconds: 120
+    periodSeconds: 30
+    timeoutSeconds: 30
+    successThreshold: 1
+    failureThreshold: 3
+  readinessProbe:
+    initialDelaySeconds: 120
+    periodSeconds: 30
+    timeoutSeconds: 30
+    successThreshold: 1
+    failureThreshold: 3
   resources:
     requests:
-      memory: "512Mi"
+      memory: "1Gi"
       cpu: "100m"
     limits:
-      memory: "1Gi"
+      memory: "2Gi"
       cpu: "500m"
   persistence:
     enabled: false

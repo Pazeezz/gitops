@@ -22,6 +22,10 @@ spec:
       targetRevision: main
       ref: values
 
+    - repoURL: https://github.com/Pazeezz/gitops.git
+      targetRevision: main
+      path: temporal/manifests
+
   ignoreDifferences:
     - group: batch
       kind: Job

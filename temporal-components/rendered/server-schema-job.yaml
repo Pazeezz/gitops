@@ -1,0 +1,166 @@
+---
+# Source: temporal/templates/server-job.yaml
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: temporal-schema-1
+  labels:
+    app.kubernetes.io/component: database
+    app.kubernetes.io/name: temporal
+    helm.sh/chart: temporal-0.48.0
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/instance: temporal
+    app.kubernetes.io/version: "1.25.1"
+    app.kubernetes.io/part-of: temporal
+spec:
+  backoffLimit: 100
+  ttlSecondsAfterFinished: 86400
+  template:
+    metadata:
+      name: temporal-schema-1
+      labels:
+        app.kubernetes.io/component: database
+        app.kubernetes.io/name: temporal
+        helm.sh/chart: temporal-0.48.0
+        app.kubernetes.io/managed-by: Helm
+        app.kubernetes.io/instance: temporal
+        app.kubernetes.io/version: "1.25.1"
+        app.kubernetes.io/part-of: temporal
+    spec:
+      serviceAccountName: default
+      restartPolicy: OnFailure
+      initContainers:
+        - name: check-cassandra-service
+          image: busybox
+          command: ['sh', '-c', 'until nc -z temporal-cassandra.temporal 9042; do echo waiting for cassandra service; sleep 1; done;']
+        - name: check-cassandra
+          image: "cassandra:4.0"
+          imagePullPolicy: IfNotPresent
+          command: ['sh', '-c', 'until cqlsh temporal-cassandra.temporal 9042 -e "SHOW VERSION"; do echo waiting for cassandra to start; sleep 1; done;']
+        - name: create-default-store
+          image: "temporalio/admin-tools:1.25.1-tctl-1.18.1-cli-1.1.0"
+          imagePullPolicy: IfNotPresent
+          command: ['temporal-cassandra-tool', 'create', '-k', 'temporal', '--replication-factor', '1']
+          env:
+            - name: CASSANDRA_HOST
+              value: temporal-cassandra
+            - name: CASSANDRA_PORT
+              value: "9042"
+            - name: CASSANDRA_KEYSPACE
+              value: temporal
+            - name: CASSANDRA_USER
+              value: user
+            - name: CASSANDRA_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: temporal-default-store
+                  key: password
+        - name: create-visibility-store
+          image: "temporalio/admin-tools:1.25.1-tctl-1.18.1-cli-1.1.0"
+          imagePullPolicy: IfNotPresent
+          command: ['temporal-sql-tool', 'create-database']
+          env:
+            - name: SQL_PLUGIN
+              value: postgres12
+            - name: SQL_HOST
+              value: temporal-visibility-postgresql
+            - name: SQL_PORT
+              value: "5432"
+            - name: SQL_DATABASE
+              value: temporal_visibility
+            - name: SQL_USER
+              value: temporal
+            - name: SQL_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: temporal-visibility-store
+                  key: password
+        - name: setup-default-store
+          image: "temporalio/admin-tools:1.25.1-tctl-1.18.1-cli-1.1.0"
+          imagePullPolicy: IfNotPresent
+          command: ['temporal-cassandra-tool', 'setup-schema', '-v', '0.0']
+          env:
+            - name: CASSANDRA_HOST
+              value: temporal-cassandra
+            - name: CASSANDRA_PORT
+              value: "9042"
+            - name: CASSANDRA_KEYSPACE
+              value: temporal
+            - name: CASSANDRA_USER
+              value: user
+            - name: CASSANDRA_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: temporal-default-store
+                  key: password
+        - name: setup-visibility-store
+          image: "temporalio/admin-tools:1.25.1-tctl-1.18.1-cli-1.1.0"
+          imagePullPolicy: IfNotPresent
+          command: ['temporal-sql-tool', 'setup-schema', '-v', '0.0']
+          env:
+            - name: SQL_PLUGIN
+              value: postgres12
+            - name: SQL_HOST
+              value: temporal-visibility-postgresql
+            - name: SQL_PORT
+              value: "5432"
+            - name: SQL_DATABASE
+              value: temporal_visibility
+            - name: SQL_USER
+              value: temporal
+            - name: SQL_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: temporal-visibility-store
+                  key: password
+        - name: update-default-store
+          image: "temporalio/admin-tools:1.25.1-tctl-1.18.1-cli-1.1.0"
+          imagePullPolicy: IfNotPresent
+          command: ['temporal-cassandra-tool', 'update-schema', '--schema-dir', '/etc/temporal/schema/cassandra/temporal/versioned']
+          env:
+            - name: CASSANDRA_HOST
+              value: temporal-cassandra
+            - name: CASSANDRA_PORT
+              value: "9042"
+            - name: CASSANDRA_KEYSPACE
+              value: temporal
+            - name: CASSANDRA_USER
+              value: user
+            - name: CASSANDRA_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: temporal-default-store
+                  key: password
+        - name: update-visibility-store
+          image: "temporalio/admin-tools:1.25.1-tctl-1.18.1-cli-1.1.0"
+          imagePullPolicy: IfNotPresent
+          command: ['temporal-sql-tool', 'update-schema', '--schema-dir', '/etc/temporal/schema/postgresql/v12/visibility/versioned']
+          env:
+            - name: SQL_PLUGIN
+              value: postgres12
+            - name: SQL_HOST
+              value: temporal-visibility-postgresql
+            - name: SQL_PORT
+              value: "5432"
+            - name: SQL_DATABASE
+              value: temporal_visibility
+            - name: SQL_USER
+              value: temporal
+            - name: SQL_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: temporal-visibility-store
+                  key: password
+        - name: create-default-namespace
+          image: "temporalio/admin-tools:1.25.1-tctl-1.18.1-cli-1.1.0"
+          imagePullPolicy: IfNotPresent
+          command: ['/bin/sh','-c']
+          args: ['temporal operator namespace describe -n default || temporal operator namespace create -n default --retention 7d']
+          env:
+            - name: TEMPORAL_ADDRESS
+              value: "temporal-frontend.temporal.svc:7233"
+      containers:
+        - name: done
+          image: "temporalio/admin-tools:1.25.1-tctl-1.18.1-cli-1.1.0"
+          imagePullPolicy: IfNotPresent
+          command: ['sh', '-c', 'echo "Store setup completed"']

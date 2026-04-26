@@ -1,0 +1,55 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: temporal-visibility-postgresql
+  namespace: temporal
+  labels:
+    app: temporal-visibility-postgresql
+spec:
+  selector:
+    app: temporal-visibility-postgresql
+  ports:
+    - port: 5432
+      targetPort: 5432
+      name: postgres
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: temporal-visibility-postgresql
+  namespace: temporal
+  labels:
+    app: temporal-visibility-postgresql
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: temporal-visibility-postgresql
+  template:
+    metadata:
+      labels:
+        app: temporal-visibility-postgresql
+    spec:
+      containers:
+        - name: postgresql
+          image: postgres:14
+          env:
+            - name: POSTGRES_USER
+              value: temporal
+            - name: POSTGRES_PASSWORD
+              value: temporal
+          ports:
+            - containerPort: 5432
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "50m"
+            limits:
+              memory: "512Mi"
+              cpu: "200m"
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/postgresql/data
+      volumes:
+        - name: data
+          emptyDir: {}

@@ -1,0 +1,15 @@
+---
+# Source: temporal/templates/server-dynamicconfigmap.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: "temporal-dynamic-config"
+  labels:
+    app.kubernetes.io/name: temporal
+    helm.sh/chart: temporal-0.48.0
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/instance: temporal
+    app.kubernetes.io/version: "1.25.1"
+    app.kubernetes.io/part-of: temporal
+data:
+  dynamic_config.yaml: |-

@@ -1,0 +1,206 @@
+---
+# Source: temporal/templates/server-service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: temporal-frontend
+  labels:
+    app.kubernetes.io/component: frontend
+    app.kubernetes.io/name: temporal
+    helm.sh/chart: temporal-0.48.0
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/instance: temporal
+    app.kubernetes.io/version: "1.25.1"
+    app.kubernetes.io/part-of: temporal
+spec:
+  type: ClusterIP
+  ports:
+    - port: 7233
+      targetPort: rpc
+      protocol: TCP
+      name: grpc-rpc
+    - port: 7243
+      targetPort: http
+      protocol: TCP
+      name: http
+      # TODO: Allow customizing the node HTTP port
+  selector:
+    app.kubernetes.io/name: temporal
+    app.kubernetes.io/instance: temporal
+    app.kubernetes.io/component: frontend
+---
+---
+# Source: temporal/templates/server-service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: temporal-frontend-headless
+  labels:
+    app.kubernetes.io/component: frontend
+    app.kubernetes.io/name: temporal
+    helm.sh/chart: temporal-0.48.0
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/instance: temporal
+    app.kubernetes.io/version: "1.25.1"
+    app.kubernetes.io/part-of: temporal
+    app.kubernetes.io/headless: 'true'
+    prometheus.io/job: temporal-frontend
+    prometheus.io/scrape: 'true'
+    prometheus.io/scheme: http
+    prometheus.io/port: "9090"
+
+  annotations:
+    # Use this annotation in addition to the actual field below because the
+    # annotation will stop being respected soon but the field is broken in
+    # some versions of Kubernetes:
+    # https://github.com/kubernetes/kubernetes/issues/58662
+    service.alpha.kubernetes.io/tolerate-unready-endpoints: "true"
+spec:
+  type: ClusterIP
+  clusterIP: None
+  publishNotReadyAddresses: true
+  ports:
+    - port: 7233
+      targetPort: rpc
+      protocol: TCP
+      name: grpc-rpc
+    - port: 9090
+      targetPort: metrics
+      protocol: TCP
+      name: metrics
+  selector:
+    app.kubernetes.io/name: temporal
+    app.kubernetes.io/instance: temporal
+    app.kubernetes.io/component: frontend
+---
+---
+# Source: temporal/templates/server-service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: temporal-matching-headless
+  labels:
+    app.kubernetes.io/component: matching
+    app.kubernetes.io/name: temporal
+    helm.sh/chart: temporal-0.48.0
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/instance: temporal
+    app.kubernetes.io/version: "1.25.1"
+    app.kubernetes.io/part-of: temporal
+    app.kubernetes.io/headless: 'true'
+    prometheus.io/job: temporal-matching
+    prometheus.io/scrape: 'true'
+    prometheus.io/scheme: http
+    prometheus.io/port: "9090"
+
+  annotations:
+    # Use this annotation in addition to the actual field below because the
+    # annotation will stop being respected soon but the field is broken in
+    # some versions of Kubernetes:
+    # https://github.com/kubernetes/kubernetes/issues/58662
+    service.alpha.kubernetes.io/tolerate-unready-endpoints: "true"
+spec:
+  type: ClusterIP
+  clusterIP: None
+  publishNotReadyAddresses: true
+  ports:
+    - port: 7235
+      targetPort: rpc
+      protocol: TCP
+      name: grpc-rpc
+    - port: 9090
+      targetPort: metrics
+      protocol: TCP
+      name: metrics
+  selector:
+    app.kubernetes.io/name: temporal
+    app.kubernetes.io/instance: temporal
+    app.kubernetes.io/component: matching
+---
+---
+# Source: temporal/templates/server-service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: temporal-history-headless
+  labels:
+    app.kubernetes.io/component: history
+    app.kubernetes.io/name: temporal
+    helm.sh/chart: temporal-0.48.0
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/instance: temporal
+    app.kubernetes.io/version: "1.25.1"
+    app.kubernetes.io/part-of: temporal
+    app.kubernetes.io/headless: 'true'
+    prometheus.io/job: temporal-history
+    prometheus.io/scrape: 'true'
+    prometheus.io/scheme: http
+    prometheus.io/port: "9090"
+
+  annotations:
+    # Use this annotation in addition to the actual field below because the
+    # annotation will stop being respected soon but the field is broken in
+    # some versions of Kubernetes:
+    # https://github.com/kubernetes/kubernetes/issues/58662
+    service.alpha.kubernetes.io/tolerate-unready-endpoints: "true"
+spec:
+  type: ClusterIP
+  clusterIP: None
+  publishNotReadyAddresses: true
+  ports:
+    - port: 7234
+      targetPort: rpc
+      protocol: TCP
+      name: grpc-rpc
+    - port: 9090
+      targetPort: metrics
+      protocol: TCP
+      name: metrics
+  selector:
+    app.kubernetes.io/name: temporal
+    app.kubernetes.io/instance: temporal
+    app.kubernetes.io/component: history
+---
+---
+# Source: temporal/templates/server-service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: temporal-worker-headless
+  labels:
+    app.kubernetes.io/component: worker
+    app.kubernetes.io/name: temporal
+    helm.sh/chart: temporal-0.48.0
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/instance: temporal
+    app.kubernetes.io/version: "1.25.1"
+    app.kubernetes.io/part-of: temporal
+    app.kubernetes.io/headless: 'true'
+    prometheus.io/job: temporal-worker
+    prometheus.io/scrape: 'true'
+    prometheus.io/scheme: http
+    prometheus.io/port: "9090"
+
+  annotations:
+    # Use this annotation in addition to the actual field below because the
+    # annotation will stop being respected soon but the field is broken in
+    # some versions of Kubernetes:
+    # https://github.com/kubernetes/kubernetes/issues/58662
+    service.alpha.kubernetes.io/tolerate-unready-endpoints: "true"
+spec:
+  type: ClusterIP
+  clusterIP: None
+  publishNotReadyAddresses: true
+  ports:
+    - port: 7239
+      targetPort: rpc
+      protocol: TCP
+      name: grpc-rpc
+    - port: 9090
+      targetPort: metrics
+      protocol: TCP
+      name: metrics
+  selector:
+    app.kubernetes.io/name: temporal
+    app.kubernetes.io/instance: temporal
+    app.kubernetes.io/component: worker

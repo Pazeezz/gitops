@@ -1,0 +1,67 @@
+server:
+  replicaCount: 1
+  config:
+    namespaces:
+      create: true
+      namespace:
+        - name: default
+          retention: 7d
+    persistence:
+      default:
+        cassandra:
+          hosts:
+            - "temporal-cassandra"
+      visibility:
+        driver: "sql"
+        sql:
+          driver: "postgres12"
+          host: "temporal-visibility-postgresql"
+          port: 5432
+          database: "temporal_visibility"
+          user: "temporal"
+          password: "temporal"
+
+cassandra:
+  enabled: true
+  updateStrategy:
+    type: RollingUpdate
+  # nodeSelector: pin to a specific node if one is memory-overcommitted
+  # selector:
+  #   nodeSelector:
+  #     kubernetes.io/hostname: <your-node-name>
+  image:
+    tag: "4.0"
+  config:
+    cluster_size: 1
+    max_heap_size: 512M
+    heap_new_size: 128M
+  env:
+    MALLOC_CONF: "narenas:4,background_thread:false"
+  livenessProbe:
+    initialDelaySeconds: 120
+    periodSeconds: 30
+    timeoutSeconds: 30
+    successThreshold: 1
+    failureThreshold: 3
+  readinessProbe:
+    initialDelaySeconds: 120
+    periodSeconds: 30
+    timeoutSeconds: 30
+    successThreshold: 1
+    failureThreshold: 3
+  resources:
+    requests:
+      memory: "1Gi"
+      cpu: "100m"
+    limits:
+      memory: "2Gi"
+      cpu: "500m"
+  persistence:
+    enabled: false
+
+prometheus:
+  enabled: false
+grafana:
+  enabled: false
+elasticsearch:
+  enabled: false

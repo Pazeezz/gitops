@@ -1,0 +1,116 @@
+---
+# Source: temporal/templates/server-configmap.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: "temporal-config"
+  labels:
+    app.kubernetes.io/name: temporal
+    helm.sh/chart: temporal-0.48.0
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/instance: temporal
+    app.kubernetes.io/version: "1.25.1"
+    app.kubernetes.io/part-of: temporal
+data:
+  config_template.yaml: |-
+    log:
+      stdout: true
+      level: "debug,info"
+
+    persistence:
+      defaultStore: default
+      visibilityStore: visibility
+      numHistoryShards: 512
+      datastores:
+        default:
+          cassandra:
+            hosts: "temporal-cassandra"
+            port: 9042
+            password: {{ .Env.TEMPORAL_STORE_PASSWORD | quote }}
+            consistency:
+              default:
+                consistency: local_quorum
+                serialConsistency: local_serial
+            keyspace: temporal
+            replicationFactor: 1
+            user: user
+        visibility:
+          sql:
+            pluginName: "postgres12"
+            driverName: "postgres12"
+            databaseName: "temporal_visibility"
+            connectAddr: "temporal-visibility-postgresql:5432"
+            connectProtocol: "tcp"
+            user: "temporal"
+            password: {{ .Env.TEMPORAL_VISIBILITY_STORE_PASSWORD  | quote }}
+            maxConnLifetime: 1h
+            maxConns: 20
+            secretName: ""
+
+    global:
+      membership:
+        name: temporal
+        maxJoinDuration: 30s
+        broadcastAddress: {{ default .Env.POD_IP "0.0.0.0" }}
+
+      pprof:
+        port: 7936
+
+      metrics:
+        tags:
+          type: {{ .Env.SERVICES }}
+        prometheus:
+          timerType: histogram
+          listenAddress: "0.0.0.0:9090"
+
+    services:
+      frontend:
+        rpc:
+          grpcPort: 7233
+          httpPort: 7243
+          membershipPort: 6933
+          bindOnIP: "0.0.0.0"
+
+      history:
+        rpc:
+          grpcPort: 7234
+          membershipPort: 6934
+          bindOnIP: "0.0.0.0"
+
+      matching:
+        rpc:
+          grpcPort: 7235
+          membershipPort: 6935
+          bindOnIP: "0.0.0.0"
+
+      worker:
+        rpc:
+          membershipPort: 6939
+          bindOnIP: "0.0.0.0"
+
+    clusterMetadata:
+      enableGlobalDomain: false
+      failoverVersionIncrement: 10
+      masterClusterName: "active"
+      currentClusterName: "active"
+      clusterInformation:
+        active:
+          enabled: true
+          initialFailoverVersion: 1
+          rpcName: "temporal-frontend"
+          rpcAddress: "127.0.0.1:7233"
+          httpAddress: "127.0.0.1:7243"
+
+    dcRedirectionPolicy:
+      policy: "noop"
+      toDC: ""
+
+    archival:
+      status: "disabled"
+
+    publicClient:
+      hostPort: "temporal-frontend:7233"
+
+    dynamicConfigClient:
+      filepath: "/etc/temporal/dynamic_config/dynamic_config.yaml"
+      pollInterval: "10s"

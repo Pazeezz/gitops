@@ -2,6 +2,10 @@ server:
   replicaCount: 1
   config:
     persistence:
+      default:
+        cassandra:
+          hosts:
+            - "temporal-cassandra"
       visibility:
         driver: "sql"
         sql:

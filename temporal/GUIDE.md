@@ -120,20 +120,22 @@ temporal/
 
 ---
 
-### Step 1 — Pin Cassandra to the right node
+### Step 1 — (Optional) Pin Cassandra to a specific node
 
-Edit `temporal/values.yaml` and set the `nodeSelector` to a node that has enough free memory:
+By default, Kubernetes will schedule Cassandra on any node with enough free memory.
+If one of your nodes is overcommitted, you can pin Cassandra to a specific node by
+uncommenting and editing the selector in `temporal/values.yaml`:
 
 ```yaml
 cassandra:
-  selector:
-    nodeSelector:
-      kubernetes.io/hostname: <your-worker-node-name>
+  # selector:
+  #   nodeSelector:
+  #     kubernetes.io/hostname: <your-node-name>
 ```
 
 Check which node has the most free memory:
 ```bash
-kubectl describe nodes | grep -A5 "Allocated resources"
+kubectl describe nodes | grep -A6 "Allocated resources"
 ```
 
 ---

@@ -253,7 +253,28 @@ kubectl -n argocd patch application temporal --type merge \
 
 ---
 
-### Step 5 — Verify all pods are Running
+### Step 5 — Verify the Schema Job completed and namespaces exist
+
+The schema Job also runs namespace registration. Verify the `default` namespace was created:
+```bash
+kubectl exec -n temporal deployment/temporal-admintools -- tctl namespace list
+```
+
+Expected output includes:
+```
+Name: default
+Name: temporal-system
+```
+
+If `default` is missing, create it manually:
+```bash
+kubectl exec -n temporal deployment/temporal-admintools -- \
+  tctl --namespace default namespace register --description "Default namespace" --retention 7
+```
+
+---
+
+### Step 7 — Verify all pods are Running
 
 ```bash
 kubectl get pods -n temporal

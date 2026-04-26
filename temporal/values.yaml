@@ -1,6 +1,11 @@
 server:
   replicaCount: 1
   config:
+    namespaces:
+      create: true
+      namespace:
+        - name: default
+          retention: 7d
     persistence:
       default:
         cassandra:

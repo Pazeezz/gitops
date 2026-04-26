@@ -279,19 +279,19 @@ temporal-worker-xxx                 1/1     Running
 
 ### Web UI
 
-The Temporal Web UI (`temporal-web`) runs on port 8088. It lets you browse namespaces,
+The Temporal Web UI (`temporal-web`) runs on port 8080. It lets you browse namespaces,
 search workflows, view execution history, and inspect task queues.
 
 **Port-forward (quickest):**
 ```bash
-kubectl port-forward -n temporal svc/temporal-web 8088:8088
+kubectl port-forward -n temporal svc/temporal-web 8080:8080
 ```
-Then open: **http://localhost:8088**
+Then open: **http://localhost:8080**
 
 **Check what's available:**
 ```
-http://localhost:8088          — Namespace list
-http://localhost:8088/namespaces/default/workflows  — Workflow list
+http://localhost:8080                                — Namespace list
+http://localhost:8080/namespaces/default/workflows  — Workflow list
 ```
 
 ---
@@ -523,8 +523,8 @@ kubectl apply -f temporal/app.yaml
 │  └────────────────────────────────────────────────────┘  │
 │                                                          │
 │  ┌──────────────┐   ┌──────────────────────────────┐    │
-│  │  admintools  │   │  temporal-web (UI) :8088      │    │
-│  │  (tctl CLI)  │   │  http://localhost:8088        │    │
+│  │  admintools  │   │  temporal-web (UI) :8080      │    │
+│  │  (tctl CLI)  │   │  http://localhost:8080        │    │
 │  └──────────────┘   └──────────────────────────────┘    │
 └──────────────────────────────────────────────────────────┘
 ```
@@ -535,7 +535,7 @@ kubectl apply -f temporal/app.yaml
 | `temporal-history` | Workflow state machine | 7234 |
 | `temporal-matching` | Task queue management | 7235 |
 | `temporal-worker` | Internal system workflows | 6939 |
-| `temporal-web` | Browser UI | 8088 |
+| `temporal-web` | Browser UI | 8080 |
 | `temporal-admintools` | `tctl` CLI pod | — |
 | `temporal-cassandra-0` | Workflow state storage | 9042 |
 | `temporal-visibility-postgresql` | Workflow search index | 5432 |

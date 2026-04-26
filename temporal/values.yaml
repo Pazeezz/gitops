@@ -16,9 +16,10 @@ cassandra:
   enabled: true
   updateStrategy:
     type: RollingUpdate
-  selector:
-    nodeSelector:
-      kubernetes.io/hostname: redpanda-lab-worker
+  # nodeSelector: pin to a specific node if one is memory-overcommitted
+  # selector:
+  #   nodeSelector:
+  #     kubernetes.io/hostname: <your-node-name>
   image:
     tag: "4.0"
   config:
